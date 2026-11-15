@@ -1,5 +1,6 @@
-from app import app
+from app import app,cache
 import redis
+import pytest
 
 def test_visits_return_count(mocker):
     mocker_test = mocker.patch("app.cache")
@@ -21,3 +22,18 @@ def test_when_redis_down(mocker):
 
     assert response.status_code == 503 
     assert "unavailable" in response.text 
+
+
+def test_visits_integration_real_redis():
+    try: 
+        cache.ping()
+    except redis.exceptions.RedisError:
+        pytest.skip("redis is not running")
+    client_browser = app.test_client()
+    first = client_browser.get("/visits").text
+    second = client_browser.get("/visits").text
+    first = first.split(": ")
+    second = second.split(": ")
+    before = int(first[1])
+    after = int(second[1])
+    assert after == before +1  
