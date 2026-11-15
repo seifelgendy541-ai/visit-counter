@@ -10,8 +10,13 @@ cache = redis.Redis(host=redis_host,port=6379)
 
 @app.route("/visits")
 def visits():
-    count = cache.incr("visits")  
-    return f"Visits: {count}"
+    
+    try:
+        count = cache.incr("visits")  
+        return f"Visits: {count}"
+    except redis.exceptions.ConnectionError:
+        return "unavailable",503
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
